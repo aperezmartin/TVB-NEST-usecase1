@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 import numpy as np
 
-from EBRAINS_ConfigManager.workflow_configurations_manager.xml_parsers import enums
-from ms_manager import MSManager
+#from EBRAINS_ConfigManager.workflow_configurations_manager.xml_parsers import enums
+from EBRAINS_Launcher.common.ms_manager import MSManager,enums
+#from ms_manager import MSManager
 
 import common.args as cmd_args
 import os,sys, pytest, argparse
