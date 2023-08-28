@@ -24,7 +24,10 @@ from dataclasses import dataclass
 
 os.environ["mylocalbranch"] = "myremotefork"
 os.environ["global_settings"] = "EBRAINS_WorkflowConfigurations/general/global_settings.xml"
-os.environ["action-plan"] = "userland/configs/local/plans/cosim_alpha_brunel_local.xml"
+
+os.environ["action-plan-Mock_1"] = "test/XML/mock_1_plan.xml"
+os.environ["action-plan-Mock_2"] = " "
+os.environ["action-plan-TVB_NEST_1"] = "userland/configs/local/plans/cosim_alpha_brunel_local.xml"
 
 """
 GLOBAL_DICT={"global_settings":os.environ["CO_SIM_TEST_GENERAL_SETTINGS"],
@@ -71,12 +74,9 @@ def get_output_path():
     
     return dirlist
 
-
 ########################
 
 class TestCoSimulator():
-
-        #conf_manager = configurations_manager.ConfigurationsManager()
 
     def test_list_outputs(self):
         simulations_paths = get_output_path()
@@ -84,15 +84,35 @@ class TestCoSimulator():
 
         assert len(simulations_paths) >= 0
         
+    @pytest.hookimpl(hookwrapper=True)
+    def test_cosim_Mock_1_MPIcommunication(self):
+        simulations_paths = get_output_path()
+        assert remove_old_simulations(simulations_paths)
+        
+        cmd = "./setup.sh "+os.environ["mylocalbranch"]+" "+os.environ["global_settings"]+" "+os.environ["action-plan-Mock_1"]+" "
+        print(cmd)
+        
+        
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   universal_newlines=True)
+        out, err = process.communicate()
+        process.wait()
+        #Check normal Standart Error
+
+        assert len(out) == 0 and len(err) == 0
+        """
+        """
     
-    def test_cosim_general(self):
+"""
+class TestUseCase():
+    def test_cosim_NEST_TVB(self):
 
         simulations_paths = get_output_path()
         assert remove_old_simulations(simulations_paths)
         
         #Launchin the simulation
         print("Launching CoSimulation")
-        cmd = "./setup.sh "+os.environ["mylocalbranch"]+" "+os.environ["global_settings"]+" "+os.environ["action-plan"]+" "
+        cmd = "./setup.sh "+os.environ["mylocalbranch"]+" "+os.environ["global_settings"]+" "+os.environ["action-plan-TVB_NEST_1"]+" "
         print(cmd)
 
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -106,13 +126,6 @@ class TestCoSimulator():
         paths = get_output_path()
         assert len(paths) >= 0
         print("Current Test Cosimulation path", paths)
-       
-
-
-class TestUseCase():
-    def test_NEST_TVB_1(self):
-        #TODO
-        assert True
 
     def test_NEST_TVB_2(self):
         #TODO
@@ -130,4 +143,5 @@ class TestUseCase():
         #TODO
         assert True
 
+        """
 

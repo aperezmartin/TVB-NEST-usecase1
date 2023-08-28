@@ -1,21 +1,60 @@
 from dataclasses import dataclass
 import numpy as np
 
+from EBRAINS_ConfigManager.global_configurations_manager.xml_parsers.configurations_manager import ConfigurationsManager
 from EBRAINS_ConfigManager.global_configurations_manager.xml_parsers.default_directories_enum import DefaultDirectories
 
 
 ############  MODEL  ###############
 
 """
-# Adatper
+# Adatper description
 - TVB adapter
 - NEST adapter
 - Hub adapter
+
+Adapter(init, start, end) -> Simulator(init, config, run) <- Parameter
 """
 
 
-
+############  Launcher  ###############
+class Launcher():
+    def __init__(self):
+        self._configurations_manager = ConfigurationsManager()
+        self._logger_settings = self._configurations_manager.get_configuration_settings('log_configurations', 
+                                                                                         self.__args.global_settings)
+        
+         
 ############  NEST  ###############
+
+class Simulator_NEST_adapter():
+    def __init__(self, p_configurations_manager, p_log_settings,
+                 p_interscalehub_addresses,
+                 is_monitoring_enabled=False,
+                 sci_params_xml_path_filename=None):
+        self.configurations_manager = p_configurations_manager
+        self.log_settings = p_log_settings
+        self.interscalehub = p_interscalehub_addresses
+        
+        self.logger = self._configurations_manager.load_log_configurations(
+                                                    name="NEST_Adapter",
+                                                    log_configurations=self._log_settings,
+                                                    target_directory=DefaultDirectories.SIMULATION_RESULTS)
+        self.path_to_parameters_file = self._configurations_manager.get_directory(
+                                                    directory=DefaultDirectories.SIMULATION_RESULTS)
+        
+        self.simulator = Simulator_NEST(self.configurations_manager,self.log_settings, self.path_to_parameters_file,)
+        
+    def execute_init_command(self):
+        self.logger.debug("INIT command is executed")
+        self.simulator.configure()
+
+    def execute_start_command(self, global_minimum_step_size):
+        self.logger.debug('START command is executed')
+        self.simulator.simulate()
+         
+    def execute_end_command(self):
+        self.logger.debug('END command is executed')
 
 @dataclass
 class Simulator_NEST_Parameters():
@@ -44,6 +83,35 @@ class Simulator_NEST():
 
 ############  TVB  ###############
 
+class Simulator_TVB_adapter():
+    def __init__(self, p_configurations_manager, p_log_settings,
+                 p_interscalehub_addresses,
+                 is_monitoring_enabled=False,
+                 sci_params_xml_path_filename=None):
+        self.configurations_manager = p_configurations_manager
+        self.log_settings = p_log_settings
+        self.interscalehub = p_interscalehub_addresses
+        
+        self.logger = self._configurations_manager.load_log_configurations(
+                                                    name="TVB_Adapter",
+                                                    log_configurations=self._log_settings,
+                                                    target_directory=DefaultDirectories.SIMULATION_RESULTS)
+        self.path_to_parameters_file = self._configurations_manager.get_directory(
+                                                    directory=DefaultDirectories.SIMULATION_RESULTS)
+        
+        self.simulator = Simulator_TVB(self.configurations_manager,self.log_settings, self.path_to_parameters_file,)
+        
+    def execute_init_command(self):
+        self.logger.debug("INIT command is executed")
+        self.simulator.configure()
+
+    def execute_start_command(self, global_minimum_step_size):
+        self.logger.debug('START command is executed')
+        self.simulator.simulate()
+         
+    def execute_end_command(self):
+        self.logger.debug('END command is executed')
+        
 @dataclass
 class Simulator_TVB_Parameters():
     regions_num = 68
