@@ -84,7 +84,7 @@ class TestCoSimulator():
 
         assert len(simulations_paths) >= 0
         
-    @pytest.hookimpl(hookwrapper=True)
+    #@pytest.hookimpl(hookwrapper=True)
     def test_cosim_Mock_1_MPIcommunication(self):
         simulations_paths = get_output_path()
         assert remove_old_simulations(simulations_paths)

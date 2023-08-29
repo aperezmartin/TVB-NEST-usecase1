@@ -78,7 +78,7 @@
                     resource usage monitoring.
                 -->
                 <par_name>CO_SIM_ENABLE_MONITORING</par_name>
-                <par_value>True</par_value>
+                <par_value>False</par_value>
             </par_005>
              <par_006>
                 <!--
