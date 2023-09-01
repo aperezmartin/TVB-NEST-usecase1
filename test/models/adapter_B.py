@@ -1,4 +1,4 @@
-import os, sys, pickle, base64, ast, numpy as np
+import os, sys, pickle, base64, ast, numpy as np, traceback
 from dataclasses import dataclass
 from mpi4py import MPI
 
@@ -32,7 +32,7 @@ class Adapter_B():
             directory=DefaultDirectories.SIMULATION_RESULTS)
 
         
-        self.__my_pid = os.getpid()
+        self.my_pid = os.getpid()
 
         # Loading scientific parameters into an object
         self.__sci_params = Xml2ClassParser(sci_params_xml_path_filename, self.logger)
@@ -44,13 +44,14 @@ class Adapter_B():
                                                                self.my_pid,
                                                                "B")
         
-        self.__init_port_names(p_interscalehub_addresses)
+        #self.__init_port_names(p_interscalehub_addresses)
         self.simulator = Simulator_B(self.configurations_manager, self.log_settings, p_interscalehub_addresses)
+        self.logger.info("APM B __init__ is executed")
         
         
-        self.logger.debug(f"host_name:{os.uname()}")
-        self.logger.info("initialized")
-        
+        #self.logger.debug(f"host_name:{os.uname()}")
+        #self.logger.info("initialized")
+    """    
     def __init_port_names(self, interscalehub_addresses):
         '''
         helper function to initialize the port_names
@@ -71,20 +72,21 @@ class Adapter_B():
                 self.__interscalehub_tvb_to_nest_address =\
                     interscalehub.get(INTERSCALE_HUB.MPI_CONNECTION_INFO.name)
                 self.logger.debug(f"Interscalehub_tvb_to_nest_address: {self.__interscalehub_tvb_to_nest_address}")
-
-    def execute_init_command(self):
-        self.logger.debug("INIT command is executed")
+    """
+    def execute_init_command(self):        
         self.simulator.configure()
-        return 10, ["detector_1", "detector_2"]
+        self.logger.debug("APM B INIT command is executed")
+        return 10, [123, 789]
 
     def execute_start_command(self, global_minimum_step_size):
-        self.logger.debug('START command is executed')
+        
         if self.__is_monitoring_enabled:
             self.__resource_usage_monitor.start_monitoring()
         self.simulator.simulate()
+        self.logger.debug('APM B START command is executed')
          
     def execute_end_command(self):
-        self.logger.debug('END command is executed')
+        self.logger.debug('APM B END command is executed')
         
 
 if __name__ == "__main__":
@@ -103,7 +105,7 @@ if __name__ == "__main__":
             is_monitoring_enabled = pickle.loads(base64.b64decode(sys.argv[4]))
             # get interscalehub connection details
             p_interscalehub_address = pickle.loads(base64.b64decode(sys.argv[5]))
-            print("APM B ",p_interscalehub_address)
+            #print("APM B ",p_interscalehub_address)
 
             # 2. security check of pickled objects
             # it raises an exception, if the integrity is compromised
@@ -135,7 +137,7 @@ if __name__ == "__main__":
             if my_rank == 0:
             """
             pid_and_local_minimum_step_size = \
-                {SIMULATOR.PID.name: nest_adapter.pid,
+                {SIMULATOR.PID.name: nest_adapter.my_pid,
                 #SIMULATOR.PID.name: os.getpid(),
                 SIMULATOR.LOCAL_MINIMUM_STEP_SIZE.name: local_minimum_step_size,
                 SIMULATOR.SPIKE_DETECTORS.name: list_spike_detector,
@@ -143,10 +145,14 @@ if __name__ == "__main__":
         
             # send the response
             # NOTE Application Manager will read the stdout stream via PIPE
-            print(f'{pid_and_local_minimum_step_size}')
+            print(f'{pid_and_local_minimum_step_size}')            
             
+            #TODO
+            #- check MPI connections are not stablized
+
             # 6. fetch next command from Application Manager
             user_action_command = input()
+            print(f'{"APM AAA"}')
 
             # NOTE Application Manager sends the control commands with parameters in
             # the following specific format as a string via stdio:
@@ -161,12 +167,12 @@ if __name__ == "__main__":
             steering_command_dictionary = control_command.get(COMMANDS.STEERING_COMMAND.name)
             current_steering_command = next(iter(steering_command_dictionary.values()))
             
-            print("APM B PARAMETERS", control_command)
+            #print("APM B PARAMETERS", control_command)
             # 7. execute if steering command is 'START'
             if current_steering_command == SteeringCommands.START:
                 # fetch global minimum step size
-                print("APM B PARAMETERS", control_command)
-                global_minimum_step_size = control_command.get(COMMANDS.PARAMETERS.name)
+                #print("APM B PARAMETERS", control_command)
+                global_minimum_step_size = [10]#control_command.get(COMMANDS.PARAMETERS.name)
                 # execute the command
                 nest_adapter.execute_start_command(global_minimum_step_size[0])
                 nest_adapter.execute_end_command()
@@ -180,5 +186,20 @@ if __name__ == "__main__":
             print(f'Argument list received: {str(sys.argv)}')
             sys.exit(1)
     except Exception as err:
-        print("Error" + str(err))
+        ex_type, ex_value, ex_traceback = sys.exc_info()
+
+        # Extract unformatter stack traces as tuples
+        trace_back = traceback.extract_tb(ex_traceback)
+
+        # Format stacktrace
+        stack_trace = list()
+
+        for trace in trace_back:
+            stack_trace.append("File : %s , Line : %d, Func.Name : %s, Message : %s" % (trace[0], trace[1], trace[2], trace[3]))
+
+        print("Exception type : %s " % ex_type.__name__)
+        print("Exception message : %s" %ex_value)
+        print("Stack trace : %s" %stack_trace)
+        
+        print("General Error " + str(err))
         sys.exit(1)

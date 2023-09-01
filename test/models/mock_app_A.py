@@ -23,7 +23,7 @@ class Simulator_A(Application_Base):
                                port2=DATA_EXCHANGE_DIRECTION.TVB_TO_NEST)
 
         self.params = Simulator_A_Parameters()
-        self.log_message("A Initialized, rank: "+str(self.__rank))
+        #self.log_message("A Initialized, rank: "+str(self.__rank))
         
     def log_message(self, msg):
         "helper function to control the log emissions as per rank"
@@ -31,25 +31,14 @@ class Simulator_A(Application_Base):
             self.logger.info(msg)
         else:
             self.logger.debug(msg)
-            
-    @property
-    def rank(self):
-        return self.__rank
-    
-    @property
-    def pid(self):
-        return self.__my_pid
-    
+
     def configure(self):
         
         self._init_mpi()
-        
         self.logger.info('configuration A done!')
-    
-        print('Simulation A done!')
-        self.logger.info('exit')
 
     def simulate(self):
+        self.logger.info('APM A start simulation')
         
         origin_value=2.8
         self._send_mpi(origin_value)
@@ -60,7 +49,7 @@ class Simulator_A(Application_Base):
         
         self._end_mpi(is_mode_sending=False)
 
-        print("Simulator A, send->",origin_value," receive ->",value)
+        print("APM Simulator A, send->",origin_value," receive ->",value)
 
 
     """

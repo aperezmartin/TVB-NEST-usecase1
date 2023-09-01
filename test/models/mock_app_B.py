@@ -20,32 +20,22 @@ class Simulator_B(Application_Base):
                                port2=DATA_EXCHANGE_DIRECTION.NEST_TO_TVB)
 
         self.params = Simulator_B_Parameters()
-        self.log_message("A Initialized, rank: "+str(self.__rank))
+        #self.log_message("A Initialized, rank: "+str(self.__rank))
         
     def log_message(self, msg):
         "helper function to control the log emissions as per rank"
         if self.rank == 0:        
             self.logger.info(msg)
         else:
-            self.logger.debug(msg)
-            
-    @property
-    def rank(self):
-        return self.__rank
-    
-    @property
-    def pid(self):
-        return self.__my_pid
+            self.logger.debug(msg)            
     
     def configure(self):
         
         self._init_mpi()
         self.logger.info('configuration B done!')
-    
-        print('Simulation B done!')
-        self.logger.info('exit')
 
     def simulate(self):
+        self.logger.info('APM B start simulation')
         
         value_rcv = self._receive_mpi()
         self.logger.info('APM B received'+str(value_rcv))
@@ -56,7 +46,7 @@ class Simulator_B(Application_Base):
         
         self._end_mpi(is_mode_sending=True)
         
-        print("Simulator B, receive->",value_rcv," send ->",value_new)
+        print("APM Simulator B, receive->",value_rcv," send ->",value_new)
         
         """
         #MPI workflow

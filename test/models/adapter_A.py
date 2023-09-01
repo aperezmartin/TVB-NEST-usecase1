@@ -1,4 +1,4 @@
-import os, sys, pickle, base64, ast, numpy as np
+import os, sys, pickle, base64, ast, numpy as np, traceback
 from dataclasses import dataclass
 from mpi4py import MPI
 
@@ -45,20 +45,22 @@ class Adapter_A():
                                                                "A")
 
         self.simulator = Simulator_A(self.configurations_manager, self.log_settings, p_interscalehub_addresses)
+        self.logger.info("APM A __init__ is executed")
         
-    def execute_init_command(self):
-        self.logger.debug("INIT command is executed")
+    def execute_init_command(self):        
         self.simulator.configure()
-        return 10, ["detector_1", "detector_2"]
+        self.logger.debug("APM A INIT command is executed")
+        return 10, [123, 456]
 
     def execute_start_command(self, global_minimum_step_size):
-        self.logger.debug('START command is executed')
+        
         if self.is_monitoring_enabled:
             self.resource_usage_monitor.start_monitoring()
         self.simulator.simulate()
+        self.logger.debug('APM A START command is executed')
         
     def execute_end_command(self):
-        self.logger.debug('END command is executed')
+        self.logger.debug('APM A END command is executed')
 
 if __name__ == "__main__":
     
@@ -76,7 +78,7 @@ if __name__ == "__main__":
             is_monitoring_enabled = pickle.loads(base64.b64decode(sys.argv[4]))
             # get interscalehub connection details
             p_interscalehub_address = pickle.loads(base64.b64decode(sys.argv[5]))
-            print("APM A ",p_interscalehub_address)
+            #print("APM A ",p_interscalehub_address)
             
 
             # 2. security check of pickled objects
@@ -109,7 +111,7 @@ if __name__ == "__main__":
             if my_rank == 0:
             """
             pid_and_local_minimum_step_size = \
-                {SIMULATOR.PID.name: adapter_a.pid,
+                {SIMULATOR.PID.name: adapter_a.my_pid,
                 #SIMULATOR.PID.name: os.getpid(),
                 SIMULATOR.LOCAL_MINIMUM_STEP_SIZE.name: local_minimum_step_size,
                 SIMULATOR.SPIKE_DETECTORS.name: list_spike_detector,
@@ -138,9 +140,11 @@ if __name__ == "__main__":
             # 7. execute if steering command is 'START'
             if current_steering_command == SteeringCommands.START:
                 # fetch global minimum step size
-                global_minimum_step_size = control_command.get(COMMANDS.PARAMETERS.name)
+                global_minimum_step_size = [10]#control_command.get(COMMANDS.PARAMETERS.name)
                 # execute the command
+                print("APM step 7","start_command")
                 adapter_a.execute_start_command(global_minimum_step_size[0])
+                print("APM step 7","end_command")
                 adapter_a.execute_end_command()
                 # exit with success code
                 sys.exit(0)
@@ -152,5 +156,19 @@ if __name__ == "__main__":
             print(f'Argument list received: {str(sys.argv)}')
             sys.exit(1)
     except Exception as err:
-        print("Error" + str(err))
+        ex_type, ex_value, ex_traceback = sys.exc_info()
+
+        # Extract unformatter stack traces as tuples
+        trace_back = traceback.extract_tb(ex_traceback)
+
+        # Format stacktrace
+        stack_trace = list()
+
+        for trace in trace_back:
+            stack_trace.append("File : %s , Line : %d, Func.Name : %s, Message : %s" % (trace[0], trace[1], trace[2], trace[3]))
+
+        print("Exception type : %s " % ex_type.__name__)
+        print("Exception message : %s" %ex_value)
+        print("Stack trace : %s" %stack_trace)
+        print("General Error " + str(err))
         sys.exit(1)
