@@ -12,7 +12,7 @@ from EBRAINS_RichEndpoint.application_companion.common_enums import INTEGRATED_I
 from EBRAINS_ConfigManager.global_configurations_manager.xml_parsers.default_directories_enum import DefaultDirectories
 from EBRAINS_ConfigManager.global_configurations_manager.xml_parsers.configurations_manager import ConfigurationsManager
 from EBRAINS_ConfigManager.workflow_configurations_manager.xml_parsers.xml2class_parser import Xml2ClassParser
-from EBRAINS_InterscaleHUB.Interscale_hub.interscalehub_enums import DATA_EXCHANGE_DIRECTION
+from EBRAINS_InterscaleHUB.common.interscalehub_enums import DATA_EXCHANGE_DIRECTION
 from EBRAINS_Launcher.common.utils.security_utils import check_integrity
 
 from mock_app_B import Simulator_B
@@ -28,69 +28,48 @@ class Adapter_B():
             name="Adapter_B",
             log_configurations=self.log_settings,
             target_directory=DefaultDirectories.SIMULATION_RESULTS)
-        self.__path_to_parameters_file = self.configurations_manager.get_directory(
+        self.path_to_parameters_file = self.configurations_manager.get_directory(
             directory=DefaultDirectories.SIMULATION_RESULTS)
-
         
         self.my_pid = os.getpid()
-
+        
         # Loading scientific parameters into an object
-        self.__sci_params = Xml2ClassParser(sci_params_xml_path_filename, self.logger)
-        self.__parameters = Parameters(self.__path_to_parameters_file)
-        self.__is_monitoring_enabled = is_monitoring_enabled
-        if self.__is_monitoring_enabled:
-            self.__resource_usage_monitor = ResourceMonitorAdapter(self.configurations_manager,
+        self.sci_params = Xml2ClassParser(sci_params_xml_path_filename, self.logger)
+        self.parameters = Parameters(self.path_to_parameters_file)
+        self.is_monitoring_enabled = is_monitoring_enabled
+        if self.is_monitoring_enabled:
+            self.resource_usage_monitor = ResourceMonitorAdapter(self.configurations_manager,
                                                                self.log_settings,
                                                                self.my_pid,
                                                                "B")
         
-        #self.__init_port_names(p_interscalehub_addresses)
         self.simulator = Simulator_B(self.configurations_manager, self.log_settings, p_interscalehub_addresses)
-        self.logger.info("APM B __init__ is executed")
-        
-        
-        #self.logger.debug(f"host_name:{os.uname()}")
-        #self.logger.info("initialized")
-    """    
-    def __init_port_names(self, interscalehub_addresses):
-        '''
-        helper function to initialize the port_names
-        '''
-        self.logger.debug("Interscalehubs endpoints: "
-                            f" {interscalehub_addresses}")
 
-        for interscalehub in interscalehub_addresses:
-            self.logger.debug(f"running interscalehub: {interscalehub}")
-            # NEST_TO_TVB RECEIVER endpoint
-            if interscalehub.get(INTERSCALE_HUB.DATA_EXCHANGE_DIRECTION.name) == DATA_EXCHANGE_DIRECTION.NEST_TO_TVB.name:
-                self.__interscalehub_nest_to_tvb_address =\
-                    interscalehub.get(INTERSCALE_HUB.MPI_CONNECTION_INFO.name)
-                self.logger.debug(f"Interscalehub_nest_to_tvb_address: {self.__interscalehub_nest_to_tvb_address}")
-
-            # TVB_TO_NEST SENDER endpoint
-            elif interscalehub.get(INTERSCALE_HUB.DATA_EXCHANGE_DIRECTION.name) == DATA_EXCHANGE_DIRECTION.TVB_TO_NEST.name:
-                self.__interscalehub_tvb_to_nest_address =\
-                    interscalehub.get(INTERSCALE_HUB.MPI_CONNECTION_INFO.name)
-                self.logger.debug(f"Interscalehub_tvb_to_nest_address: {self.__interscalehub_tvb_to_nest_address}")
-    """
+    @property
+    def pid(self):
+        return self.my_pid 
+    
     def execute_init_command(self):        
         self.simulator.configure()
-        self.logger.debug("APM B INIT command is executed")
+        self.logger.info("APM B INIT command is executed")
         return 10, [123, 789]
 
     def execute_start_command(self, global_minimum_step_size):
-        
-        if self.__is_monitoring_enabled:
-            self.__resource_usage_monitor.start_monitoring()
+        if self.is_monitoring_enabled:
+            self.resource_usage_monitor.start_monitoring()
+            
+        self.logger.info('APM B START command')
         self.simulator.simulate()
-        self.logger.debug('APM B START command is executed')
+        self.logger.info('APM B START command is executed')
          
     def execute_end_command(self):
-        self.logger.debug('APM B END command is executed')
+        if self.is_monitoring_enabled:
+            self.resource_usage_monitor.stop_monitoring()
+            
+        self.logger.info('APM B END command is executed')
         
 
 if __name__ == "__main__":
-    
     try:
         # TODO better handling of arguments parsing
         if len(sys.argv) == 6:        
@@ -131,14 +110,8 @@ if __name__ == "__main__":
             # NOTE Application Manager expects a string in the following format:
             # {'PID': <pid>, 'LOCAL_MINIMUM_STEP_SIZE': <step size>}
 
-            """
-            # prepare the response
-            my_rank = nest_adapter.rank
-            if my_rank == 0:
-            """
             pid_and_local_minimum_step_size = \
-                {SIMULATOR.PID.name: nest_adapter.my_pid,
-                #SIMULATOR.PID.name: os.getpid(),
+                {SIMULATOR.PID.name: nest_adapter.pid,
                 SIMULATOR.LOCAL_MINIMUM_STEP_SIZE.name: local_minimum_step_size,
                 SIMULATOR.SPIKE_DETECTORS.name: list_spike_detector,
                 }
@@ -148,11 +121,10 @@ if __name__ == "__main__":
             print(f'{pid_and_local_minimum_step_size}')            
             
             #TODO
-            #- check MPI connections are not stablized
+            #- check MPI if connections are not stablized
 
             # 6. fetch next command from Application Manager
             user_action_command = input()
-            print(f'{"APM AAA"}')
 
             # NOTE Application Manager sends the control commands with parameters in
             # the following specific format as a string via stdio:

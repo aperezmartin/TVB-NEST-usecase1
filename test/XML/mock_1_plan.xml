@@ -131,8 +131,9 @@
                 <action_type>CO_SIM_ACTION</action_type>
                 <action_goal>CO_SIM_SIMULATION</action_goal>
                 <action_realm>A</action_realm>
-                <action_label>A_SIMULATOR</action_label>
-                <!-- <action_label>NEST_SIMULATOR</action_label>-->
+                <!-- Not working with current Framework version -->
+                <!-- <action_label>A_SIMULATOR</action_label>-->
+                <action_label>NEST_SIMULATOR</action_label>
                 <action_xml>mock_1_adapter_a.xml</action_xml>
                 <action_launch_method>CO_SIM_CONCURRENT_ACTION</action_launch_method>
             </action_004>
@@ -154,8 +155,9 @@
                 <action_type>CO_SIM_ACTION</action_type>
                 <action_goal>CO_SIM_SIMULATION</action_goal>
                 <action_realm>B</action_realm>
-                <action_label>B_SIMULATOR</action_label>
-                <!-- <action_label>TVB_SIMULATOR</action_label>-->
+                <!-- Not working with current Framework version -->
+                <!-- <action_label>B_SIMULATOR</action_label>-->
+                <action_label>TVB_SIMULATOR</action_label>
                 <action_xml>mock_1_adapter_b_.xml</action_xml>
                 <action_launch_method>CO_SIM_CONCURRENT_ACTION</action_launch_method>
             </action_010>

@@ -12,7 +12,7 @@ from EBRAINS_RichEndpoint.application_companion.common_enums import INTEGRATED_I
 from EBRAINS_ConfigManager.global_configurations_manager.xml_parsers.default_directories_enum import DefaultDirectories
 from EBRAINS_ConfigManager.global_configurations_manager.xml_parsers.configurations_manager import ConfigurationsManager
 from EBRAINS_ConfigManager.workflow_configurations_manager.xml_parsers.xml2class_parser import Xml2ClassParser
-from EBRAINS_InterscaleHUB.Interscale_hub.interscalehub_enums import DATA_EXCHANGE_DIRECTION
+from EBRAINS_InterscaleHUB.common.interscalehub_enums import DATA_EXCHANGE_DIRECTION
 from EBRAINS_Launcher.common.utils.security_utils import check_integrity
 
 from mock_app_A import Simulator_A
@@ -31,7 +31,6 @@ class Adapter_A():
         self.path_to_parameters_file = self.configurations_manager.get_directory(
             directory=DefaultDirectories.SIMULATION_RESULTS)
 
-        
         self.my_pid = os.getpid()
 
         # Loading scientific parameters into an object
@@ -45,25 +44,29 @@ class Adapter_A():
                                                                "A")
 
         self.simulator = Simulator_A(self.configurations_manager, self.log_settings, p_interscalehub_addresses)
-        self.logger.info("APM A __init__ is executed")
-        
+    
+    @property
+    def pid(self):
+        return self.my_pid  
+    
     def execute_init_command(self):        
         self.simulator.configure()
-        self.logger.debug("APM A INIT command is executed")
+        self.logger.info("APM A INIT command is executed")
         return 10, [123, 456]
 
     def execute_start_command(self, global_minimum_step_size):
-        
         if self.is_monitoring_enabled:
             self.resource_usage_monitor.start_monitoring()
+        self.logger.info('APM A START command')
         self.simulator.simulate()
-        self.logger.debug('APM A START command is executed')
+        self.logger.info('APM A START command is executed')
         
     def execute_end_command(self):
-        self.logger.debug('APM A END command is executed')
+        if self.is_monitoring_enabled:
+            self.resource_usage_monitor.stop_monitoring()
+        self.logger.info('APM A END command is executed')
 
 if __name__ == "__main__":
-    
     try:
         # TODO better handling of arguments parsing
         if len(sys.argv) == 6:        
@@ -89,7 +92,7 @@ if __name__ == "__main__":
             check_integrity(is_monitoring_enabled, bool)
 
             # 3. everything is fine, configure simulator
-            adapter_a = Adapter_A(
+            tvb_adapter = Adapter_A(
                 configurations_manager,
                 log_settings,
                 p_interscalehub_address,
@@ -97,7 +100,7 @@ if __name__ == "__main__":
                 sci_params_xml_path_filename=p_sci_params_xml_path_filename)
 
             # 4. execute 'INIT' command which is implicit with when laucnhed
-            local_minimum_step_size, list_spike_detector = adapter_a.execute_init_command()
+            local_minimum_step_size, list_spike_detector = tvb_adapter.execute_init_command()
 
             # 5. send the pid and the local minimum step size to Application Manager
             # as a response to 'INIT' as per protocol
@@ -105,14 +108,8 @@ if __name__ == "__main__":
             # NOTE Application Manager expects a string in the following format:
             # {'PID': <pid>, 'LOCAL_MINIMUM_STEP_SIZE': <step size>}
 
-            """
-            # prepare the response
-            my_rank = adapter_a.rank
-            if my_rank == 0:
-            """
             pid_and_local_minimum_step_size = \
-                {SIMULATOR.PID.name: adapter_a.my_pid,
-                #SIMULATOR.PID.name: os.getpid(),
+                {SIMULATOR.PID.name: tvb_adapter.pid,
                 SIMULATOR.LOCAL_MINIMUM_STEP_SIZE.name: local_minimum_step_size,
                 SIMULATOR.SPIKE_DETECTORS.name: list_spike_detector,
                 }
@@ -120,6 +117,9 @@ if __name__ == "__main__":
             # send the response
             # NOTE Application Manager will read the stdout stream via PIPE
             print(f'{pid_and_local_minimum_step_size}')
+            
+            #TODO
+            #- check MPI if connections are not stablized
             
             # 6. fetch next command from Application Manager
             user_action_command = input()
@@ -143,9 +143,9 @@ if __name__ == "__main__":
                 global_minimum_step_size = [10]#control_command.get(COMMANDS.PARAMETERS.name)
                 # execute the command
                 print("APM step 7","start_command")
-                adapter_a.execute_start_command(global_minimum_step_size[0])
+                tvb_adapter.execute_start_command(global_minimum_step_size[0])
                 print("APM step 7","end_command")
-                adapter_a.execute_end_command()
+                tvb_adapter.execute_end_command()
                 # exit with success code
                 sys.exit(0)
             else:

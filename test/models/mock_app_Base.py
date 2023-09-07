@@ -36,23 +36,9 @@ class Application_Base():
             log_configurations= p_log_settings,
             target_directory=DefaultDirectories.SIMULATION_RESULTS)
         
-        # MPI rank
-        #self.comm = MPI.COMM_WORLD
-        #self.rank = self.comm.Get_rank()
         self.my_pid = os.getpid()
-        #self.logger.info(f"size: {self.comm.Get_size()}, my rank: {self.rank}, "
-        #                   f"host_name:{os.uname()}")
-        
         self.interscalehub_addresses = p_interscalehub_addresses
         
-    #@property
-    #def rank(self):
-    #    return self.__rank
-    
-    @property
-    def pid(self):
-        return self.my_pid
-    
     def _init_port_names(self, port1:DATA_EXCHANGE_DIRECTION, port2:DATA_EXCHANGE_DIRECTION):
         
         for mpi_address in self.interscalehub_addresses:
@@ -64,11 +50,13 @@ class Application_Base():
                 self.interscalehub_B_to_A_address = mpi_address.get(INTERSCALE_HUB.MPI_CONNECTION_INFO.name)
                 #print("APM _init_port_names ",self.__class__.__name__,"interscalehub_B_to_A_address",self.interscalehub_B_to_A_address)
             #else:
-                #print("APM Error _init_port_names ",mpi_address[str(DATA_EXCHANGE_DIRECTION.__name__)], port1.name, INTERSCALE_HUB.MPI_CONNECTION_INFO.name)
+            #    print("APM Error _init_port_names ",mpi_address[str(DATA_EXCHANGE_DIRECTION.__name__)], port1.name, INTERSCALE_HUB.MPI_CONNECTION_INFO.name)
 
     def _init_mpi(self):
         try:
             if self.interscalehub_A_to_B_address and self.interscalehub_B_to_A_address:
+                
+                self.logger.info(f"APM MPI comms for {self.__class__.__name__}")
                 """sets up MPI communicators"""
                 # create receiver communicator
                 self.comm_receiver = MPI.COMM_WORLD.Connect(self.interscalehub_A_to_B_address)
@@ -83,12 +71,12 @@ class Application_Base():
                 self.logger.debug("APM interscalehub_A_to_B_address error")
                 
         except Exception as err:
-            self.logger.error("The error in init_mpi,: " + str(err))
+            self.logger.error(f"The error in init_mpi: {err}")
     
         
     def _send_mpi(self, data:float):
-        #print("APM "+ str(self.__class__.__name__), "_send_mpi")
-        self.logger.info("APM start send "+ str(self.__class__.__name__))
+
+        self.logger.info(f"APM start send {self.__class__.__name__}")
         status_ = MPI.Status()
         
         # wait until the transformer accept the connections
@@ -99,7 +87,7 @@ class Application_Base():
             self.logger.info("APM send accept")
         
         source = status_.Get_source()  # the id of the excepted source
-        self.logger.info("APM get source"+str(vars(source)))
+        self.logger.info(f"APM get source {vars(source)}")
 
         self.comm_sender.Send([data, MPI.DOUBLE], dest=source, tag=0)
         self.logger.info("end send")
@@ -120,7 +108,7 @@ class Application_Base():
         # get the rate
         #rates = np.empty(size, dtype='d')
         #self.comm_receiver.Recv([rates, size, MPI.DOUBLE], source=0, tag=MPI.ANY_TAG, status=status_)
-        self.logger.info("end receive " + str(obj_rcv))
+        self.logger.info(f"end receive {obj_rcv}")
         # print the summary of the data
         if status_.Get_tag() == 0:
             return obj_rcv
@@ -131,17 +119,17 @@ class Application_Base():
 
         # different ending of the transformer
         if is_mode_sending:
-            self.logger.info(str(self.simulator_name)+" close connection send "+ self.interscalehub_B_to_A_address)
+            self.logger.info(f"{self.simulator_name} close connection send {self.interscalehub_B_to_A_address}")
             self._close_connection(self.comm_sender, self.interscalehub_B_to_A_address)
         else:
-            self.logger.info(str(self.simulator_name)+" close connection receive " + self.interscalehub_A_to_B_address)
+            self.logger.info(f"{self.simulator_name} close connection receive {self.interscalehub_A_to_B_address}")
             self._close_connection(self.comm_receiver, self.interscalehub_A_to_B_address)
         return Response.OK
     
     def _close_connection(self, comm, address):
         # closing the connection at this end
-        self.logger.info(str(self.simulator_name)+"disconnect communication")
+        self.logger.info(f"{self.simulator_name} disconnected communication")
         comm.Disconnect()
-        self.logger.info(str(self.simulator_name)+" close " + address)
+        self.logger.info(f"{self.simulator_name} closed {address} ")
         MPI.Close_port(address)
-        self.logger.info(str(self.simulator_name)+" close connection " + address)
+        self.logger.info(f"{self.simulator_name} closed connection {address} ")
