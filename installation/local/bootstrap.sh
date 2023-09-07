@@ -45,7 +45,11 @@ CO_SIM_NEST=${CO_SIM_ROOT_PATH}/nest-installed
 #
 # STEP 2.1 - base packages
 sudo apt update
-sudo apt install -y build-essential cmake git python3 python3-pip
+sudo apt install -y build-essential git python3 python3-pip
+
+# install the latest version of cmake
+sudo snap install cmake --classic
+
 #
 # STEP 2.2 - packages used by NEST, TVB and the use-case per se
 sudo apt install -y doxygen
@@ -65,14 +69,15 @@ echo "1" | sudo update-alternatives --config mpirun 1>/dev/null 2>&1 # --> choos
  
 #
 # STEP 3 - install python packages for the TVB-NEST use-case
-#
+
 #
 # STEP 4 - TVB
 #
 # NOTE: Specific versions are required for some packages
 pip install --no-cache --target=${CO_SIM_SITE_PACKAGES} \
         tvb-contrib==2.2 tvb-data==2.0 tvb-gdist==2.1 tvb-library==2.2 \
-        cython elephant mpi4py numpy==1.23 pyzmq requests testresources
+        cython elephant mpi4py numpy==1.23 pyzmq requests testresources \
+		flask flask-cors gunicorn
 
 # 
 # STEP 5 - cloning github repos
