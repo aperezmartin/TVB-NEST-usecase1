@@ -42,42 +42,13 @@ class Simulator_A(Application_Base):
 
     def simulate(self):
         self.logger.info('APM A start simulation')
-        """
-        origin_value=2.8
-        self._send_mpi(origin_value)
-        self.logger.info(f"APM A send {origin_value}")
-        
-        value = self._receive_mpi()
-        self.logger.info(f"APM A received {value}")
-        
-        self._end_mpi(is_mode_sending=False)
 
-        self.logger.info(f"APM Simulator A, send-> {origin_value} receive-> {value}")
-        """
+        self._nest_mpi_snd()
+        self._nest_mpi_rcv()
+
         self.logger.info('exit')
         return Response.OK
 
-
-"""
-def configure(self):
-    self.__comm = MPI.COMM_WORLD.Connect(self.__interscalehub_A_to_B_address)
-
-def simulate(self):
-    self.__logger.info('start the simulation A')
-    
-    
-    #MPI workflow
-    data = {'a': 2, 'b': 4}
-    self.__comm.send(data, dest=self.__interscalehub_A_to_B_address)
-    i_data = self.__comm.recv(source=self.__interscalehub_B_to_A_address)
-    
-    self.__logger.info('A received'+str(i_data))
-    
-    self.__comm.Disconnect()
-    MPI.Close_port(self.__interscalehub_nest_to_tvb_address)
-"""
-
-        
         
 
 

@@ -36,12 +36,12 @@ class Adapter_B():
         # Loading scientific parameters into an object
         self.sci_params = Xml2ClassParser(sci_params_xml_path_filename, self.logger)
         self.parameters = Parameters(self.path_to_parameters_file)
-        self.is_monitoring_enabled = is_monitoring_enabled
-        if self.is_monitoring_enabled:
-            self.resource_usage_monitor = ResourceMonitorAdapter(self.configurations_manager,
-                                                               self.log_settings,
-                                                               self.my_pid,
-                                                               "B")
+        #self.is_monitoring_enabled = is_monitoring_enabled
+        #if self.is_monitoring_enabled:
+        #    self.resource_usage_monitor = ResourceMonitorAdapter(self.configurations_manager,
+        #                                                       self.log_settings,
+        #                                                       self.my_pid,
+        #                                                       "B")
         
         self.simulator = Simulator_B(self.configurations_manager, self.log_settings, p_interscalehub_addresses)
 
@@ -55,16 +55,16 @@ class Adapter_B():
         return 10, [123, 789]
 
     def execute_start_command(self, global_minimum_step_size):
-        if self.is_monitoring_enabled:
-            self.resource_usage_monitor.start_monitoring()
+        #if self.is_monitoring_enabled:
+        #    self.resource_usage_monitor.start_monitoring()
             
         self.logger.info('APM B START command')
         self.simulator.simulate()
         self.logger.info('APM B START command is executed')
          
     def execute_end_command(self):
-        if self.is_monitoring_enabled:
-            self.resource_usage_monitor.stop_monitoring()
+        #if self.is_monitoring_enabled:
+        #    self.resource_usage_monitor.stop_monitoring()
             
         self.logger.info('APM B END command is executed')
         

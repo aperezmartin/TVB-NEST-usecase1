@@ -38,31 +38,9 @@ class Simulator_B(Application_Base):
 
     def simulate(self):
         self.logger.info('APM B start simulation')
-        """
-        value_rcv = self._receive_mpi()
-        self.logger.info(f"APM B received {value_rcv}")
-        
-        value_new = value_rcv * 8
-        self._send_mpi(value_new)
-        self.logger.info(f"APM B send {value_new}")
-        
-        self._end_mpi(is_mode_sending=True)
-        
-        self.logger.info(f"APM Simulator B, receive-> {value_rcv} send-> {value_new}") 
-        """       
+        self._tvb_mpi_rcv()
+        self._tvb_mpi_snd()
+
+
         self.logger.info('exit')
         return Response.OK
-    
-"""
-#MPI workflow
-data = {'a': 2, 'b': 4}
-i_data = self.__comm.recv(source=self.__interscalehub_A_to_B_address)
-self.__logger.info('B received'+str(i_data))
-
-i_data = i_data * 2
-self.__comm.send(i_data, dest=self.__interscalehub_B_to_A_address)
-
-self.__comm.Disconnect()
-MPI.Close_port(self.__interscalehub_nest_to_tvb_address)
-"""
-        

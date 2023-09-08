@@ -36,12 +36,12 @@ class Adapter_A():
         # Loading scientific parameters into an object
         self.sci_params = Xml2ClassParser(sci_params_xml_path_filename, self.logger)
         self.parameters = Parameters(self.path_to_parameters_file)
-        self.is_monitoring_enabled = is_monitoring_enabled
-        if self.is_monitoring_enabled:
-            self.resource_usage_monitor = ResourceMonitorAdapter(self.configurations_manager,
-                                                               self.log_settings,
-                                                               self.my_pid,
-                                                               "A")
+        #self.is_monitoring_enabled = is_monitoring_enabled
+        #if self.is_monitoring_enabled:
+        #    self.resource_usage_monitor = ResourceMonitorAdapter(self.configurations_manager,
+        #                                                       self.log_settings,
+        #                                                       self.my_pid,
+        #                                                       "A")
 
         self.simulator = Simulator_A(self.configurations_manager, self.log_settings, p_interscalehub_addresses)
     
@@ -55,15 +55,15 @@ class Adapter_A():
         return 10, [123, 456]
 
     def execute_start_command(self, global_minimum_step_size):
-        if self.is_monitoring_enabled:
-            self.resource_usage_monitor.start_monitoring()
+        #if self.is_monitoring_enabled:
+        #    self.resource_usage_monitor.start_monitoring()
         self.logger.info('APM A START command')
         self.simulator.simulate()
         self.logger.info('APM A START command is executed')
         
     def execute_end_command(self):
-        if self.is_monitoring_enabled:
-            self.resource_usage_monitor.stop_monitoring()
+        #if self.is_monitoring_enabled:
+        #    self.resource_usage_monitor.stop_monitoring()
         self.logger.info('APM A END command is executed')
 
 if __name__ == "__main__":
