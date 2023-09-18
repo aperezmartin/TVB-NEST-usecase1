@@ -56,13 +56,18 @@ class Application_Base():
         # NOTE: the mock NEST OUTPUT simulation
         starting = 0.0 # the begging of each time of synchronization
         status_ = MPI.Status() # status of the different message
-        check = np.empty(1,dtype='b') # needed?
+        status_transformer = MPI.Status()
+        check = np.empty(1,dtype='b') # needed? 
         while True:
-            self.logger.info("NEST_OUTPUT: wait for ready signal")
+            self.logger.info("NEST_OUTPUT: sending for ready signal")
             # NOTE: seems like a handshake..needed?
-            self.comm_sender.Send([np.array([True],dtype='b'), 1, MPI.CXX_BOOL], dest=0, tag=0)
-            self.comm_sender.Recv([check, 1, MPI.CXX_BOOL], source=MPI.ANY_SOURCE, tag=0,status=status_)
-            
+            self.comm_sender.Send([np.array(True,dtype='b'),MPI.BOOL], dest=0, tag=0)
+            #self.comm_sender.send(True, dest=0, tag=0)
+            self.logger.info("NEST_OUTPUT: wait for ready signal")
+            # TODO: it gets stuck in the next line
+            #self.comm_sender.Recv([check, 1, MPI.CXX_BOOL], source=MPI.ANY_SOURCE, tag=0,status=status_)
+            check = self.comm_sender.recv(source=MPI.ANY_SOURCE, tag=0, status=status_transformer)
+            self.logger.info(f"NEST_OUTPUT: check {check}")
             self.logger.info("NEST_OUTPUT: simulate next step...")
             # create random data
             size= np.random.randint(0,1000)
@@ -138,11 +143,13 @@ class Application_Base():
             while not accept:
                 req = self.comm_sender.irecv(source=0,tag=0)
                 accept = req.wait(status_)
+                self.logger.info("TVB_OUTPUT: send accept")
             self.logger.info("TVB_OUTPUT: simulate next step")
             # TODO: the irecv above is from source 0, so 'source = status_.Get_source()' will be 0.
             # TODO: If the goal was to send from multiple TVB ranks to multiple sources, this needs some work.
             # TODO: essentially this would be an M:N coupling then
             source = status_.Get_source() # the id of the excepted source
+            self.logger.info("get source")
             # create random data
             size= int(self.min_delay/0.1 )
             rate = np.random.rand(size)*400
@@ -160,7 +167,7 @@ class Application_Base():
             self.comm_sender.Send([data, MPI.DOUBLE], dest=source, tag=0)
             
             starting+=self.min_delay
-            if starting > 10000:
+            if starting > 100: #10000
                 break
         
         accept = False
@@ -181,18 +188,18 @@ class Application_Base():
         while(True):
             self.logger.info("TVB_INPUT: ready to receive next step")
             # send to the translator, I want the next part
-            req = self.comm_receiver.isend(True, dest=1, tag=0)
+            req = self.comm_receiver.isend(True, dest=0, tag=0)
             req.wait()
             
             times=np.empty(2,dtype='d')
-            self.comm_receiver.Recv([times, MPI.FLOAT], source=1, tag=0)
+            self.comm_receiver.Recv([times, MPI.FLOAT], source=0, tag=MPI.ANY_TAG)
             
             size=np.empty(1,dtype='i')
-            self.comm_receiver.Recv([size, MPI.INT], source=1, tag=0)
+            self.comm_receiver.Recv([size, MPI.INT], source=0, tag=0)
             
             
             rates = np.empty(size, dtype='d')
-            self.comm_receiver.Recv([rates,size, MPI.DOUBLE],source=1,tag=MPI.ANY_TAG,status=status_)
+            self.comm_receiver.Recv([rates,size, MPI.DOUBLE],source=0,tag=MPI.ANY_TAG,status=status_)
             
             # summary of the data
             if status_.Get_tag() == 0:

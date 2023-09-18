@@ -1,0 +1,16 @@
+How to execute it ??
+
+it needs 3 arguments,
+- where your repo is cloned in the local folder
+- where global_settings is located
+- where action_plan is located
+
+like this:
+./setup.sh myforkedrepo ./test/XML/global_settings.xml  ./test/XML/mock_1_plan.xml 
+
+
+Current state:
+--------------
+Fake apps are able to connect to HUB but the simulation protocol get stuck.
+I reused Kim's work about MPI protocol between apps, but things don't work as expected. Some work is needed here.
+Happy coding! :)

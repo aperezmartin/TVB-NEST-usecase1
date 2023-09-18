@@ -20,7 +20,6 @@ class Simulator_A(Application_Base):
     def __init__(self, p_configurations_manager,  p_log_settings, p_interscalehub_addresses):
         super().__init__("Simulator A", p_configurations_manager,  p_log_settings, p_interscalehub_addresses)
 
-        #NEST_TO_TVB (RECEIVER), TVB_TO_NEST (SENDER)
         self._init_port_names( port1=DATA_EXCHANGE_DIRECTION.NEST_TO_TVB, 
                                port2=DATA_EXCHANGE_DIRECTION.TVB_TO_NEST)
 
